@@ -1,5 +1,6 @@
 import { Nav, Container } from "react-bootstrap";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import SearchDocFaqs from "../docs/SearchDocFaqs";
 
 const Navbar = () => {
   const location = useLocation();
@@ -15,6 +16,7 @@ const Navbar = () => {
             Evotech Global
           </h4>
         </Link>
+        <SearchDocFaqs />
         <Nav className="gap-2">
           <Nav.Item>
             <Nav.Link

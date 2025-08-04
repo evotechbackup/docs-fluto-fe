@@ -2,12 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { FaChevronDown, FaChevronRight, FaChevronUp } from "react-icons/fa6";
 import { DocumentContent } from "../../../helper/DocumentsJSONData";
+import { useSearchParams } from "react-router-dom";
 
-export default function DocumentPage({
-  scrollToId,
-}: {
-  scrollToId: string | null;
-}) {
+export default function DocumentPage() {
   const sections = DocumentContent.filter(
     (item) => typeof item === "object" && !Array.isArray(item)
   );
@@ -15,12 +12,12 @@ export default function DocumentPage({
   const contentRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [activeId, setActiveId] = useState<string | null>(null);
-  //   const [expandedSection, setExpandedSection] = useState<string | null | "all">(
-  //     "all"
-  //   );
+
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(sections.map((s) => s.id)) // All expanded initially
+    new Set(sections.map((s) => s.id))
   );
+  const [searchParams] = useSearchParams();
+  const scrollToId = searchParams.get("st");
 
   const scrollTo = (id: string) => {
     contentRefs.current[id]?.scrollIntoView({
@@ -30,31 +27,29 @@ export default function DocumentPage({
   };
 
   useEffect(() => {
-    if (!scrollToId) return;
+    const defaultScolled = DocumentContent[0].id;
+    console.log("default", defaultScolled);
+    const targetId = scrollToId || defaultScolled;
+    const el = contentRefs.current[targetId];
+    console.log("el", el);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      const matched = DocumentContent.find((section) =>
+        section.sections?.some(
+          (sub) =>
+            (sub.id ||
+              `${section.id}-${sub.title}`
+                .toLowerCase()
+                .replace(/\s+/g, "-")) === targetId
+        )
+      );
 
-    requestAnimationFrame(() => {
-      const el = contentRefs.current[scrollToId];
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-
-        const matched = DocumentContent.find((section) =>
-          section.sections?.some(
-            (sub) =>
-              (sub.id ||
-                `${section.id}-${sub.title}`
-                  .toLowerCase()
-                  .replace(/\s+/g, "-")) === scrollToId
-          )
-        );
-
-        if (matched) {
-          setExpandedSections((prev) => new Set(prev).add(matched.id));
-          //   setExpandedSection(matched.id);
-        }
-
-        setActiveId(scrollToId);
+      if (matched) {
+        setExpandedSections((prev) => new Set(prev).add(matched.id));
       }
-    });
+
+      setActiveId(targetId);
+    }
   }, [scrollToId]);
 
   useEffect(() => {
@@ -73,7 +68,7 @@ export default function DocumentPage({
       },
       {
         root: document.getElementById("main-content"),
-        rootMargin: "0px 0px -60% 0px",
+        rootMargin: "-30% 0px -30% 0px",
         threshold: 0.1,
       }
     );
@@ -257,9 +252,18 @@ export default function DocumentPage({
                             className="mb-5 scroll-mt-24"
                           >
                             <h3
-                              className="h5 fw-semibold mb-2 text-start text-dark"
+                              className="fw-semibold mb-2 text-start text-dark d-flex align-items-start gap-2"
                               style={{ fontSize: "18px" }}
                             >
+                              <span
+                                className="mt-2 d-inline-block"
+                                style={{
+                                  width: "8px",
+                                  height: "8px",
+                                  borderRadius: "50%",
+                                  backgroundColor: "#212529",
+                                }}
+                              ></span>
                               {sub.title}
                             </h3>
 
@@ -357,7 +361,7 @@ export default function DocumentPage({
                       </p>
 
                       {section.features && (
-                        <ul className="ps-4 list-unstyled">
+                        <ul className="ps-4 list-disc ps-5 marker:text-gray-700">
                           {section.features.map((f: any, i: number) => (
                             <li key={i} className="mb-2 text-start">
                               <strong
